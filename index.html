@@ -1127,7 +1127,6 @@
           </div>
           <button class="btn btn-primary" onclick="openProductForm()">➕ Add Product</button>
           <button class="btn btn-secondary" onclick="exportProducts()">⬇ Export</button>
-          <button class="btn btn-secondary" onclick="resetToSamples()">↺ Samples</button>
         </div>
         <div class="admin-table-wrap">
           <div id="adminTableContainer"></div>
@@ -1286,34 +1285,6 @@
   <div class="modal-content" id="detailContent"></div>
 </div>
 
-<!-- ============ CHECKOUT MODAL ============ -->
-<!-- <div class="modal" id="checkoutModal">
-  <div class="modal-content">
-    <button class="modal-close" onclick="closeCheckout()">✕</button>
-    <h2>🧾 Checkout</h2> -->
-    <!-- <form onsubmit="handleCheckout(event)">
-      <div class="form-grid">
-        <div><label>Full Name *</label><input type="text" required placeholder="Jane Doe"></div>
-        <div><label>Email *</label><input type="email" required placeholder="jane@example.com"></div>
-        <div class="full"><label>Shipping Address *</label><textarea required placeholder="123 Main St, City, PIN"></textarea></div>
-        <!-- <div class="full">
-          <label>Payment Method *</label>
-          <select required>
-            <option>Credit Card</option><option>UPI</option><option>Cash on Delivery</option>
-          </select>
-        </div> -->
-      <!-- </div>
-      <div class="cart-total" style="margin-top:20px">
-        <span>Order Total</span><span class="amount" id="checkoutTotal">₹0.00</span>
-      </div>
-      <div class="modal-buttons">
-        <button type="button" class="btn btn-secondary" onclick="closeCheckout()">Back</button>
-        <button type="submit" class="btn btn-primary">Place Order</button>
-      </div>
-    </form> --> 
-  <!-- </div>
-</div> -->
-
 <!-- ============ CONFIRM MODAL ============ -->
 <div class="modal" id="confirmModal">
   <div class="modal-content" style="max-width:480px">
@@ -1392,27 +1363,12 @@ const STORAGE = {
 const COUPONS = { 'SAVE10': 0.10, 'WELCOME20': 0.20 };
 
 /* ============================================================
-   SEED DATA
-   ============================================================ */
-const SEED_PRODUCTS = [
-  {id:1,title:"Wireless Bluetooth Headphones",category:"Electronics",price:3999,oldPrice:5999,rating:4.3,reviews:210,stock:8,desc:"Over-ear wireless headphones with 30-hour battery life and active noise isolation. Perfect for travel and work.",img:"https://picsum.photos/seed/headphones/400/400",link:"https://www.amazon.in/s?k=wireless+bluetooth+headphones"},
-  {id:2,title:"Smart Fitness Watch",category:"Electronics",price:7499,oldPrice:0,rating:4.6,reviews:512,stock:15,desc:"Track heart rate, sleep, and workouts with a 7-day battery. Water-resistant and smartphone-connected.",img:"https://picsum.photos/seed/watch/400/400",link:"https://www.amazon.in/s?k=smart+fitness+watch"},
-  {id:3,title:"Men's Cotton Casual Shirt",category:"Fashion",price:999,oldPrice:1499,rating:4.1,reviews:88,stock:3,desc:"Breathable cotton shirt with a regular fit. Machine washable and wrinkle-resistant.",img:"https://picsum.photos/seed/shirt/400/400",link:"https://www.amazon.in/s?k=mens+cotton+casual+shirt"},
-  {id:4,title:"Women's Running Shoes",category:"Fashion",price:2499,oldPrice:0,rating:4.5,reviews:340,stock:20,desc:"Lightweight cushioned running shoes for daily training. Breathable mesh upper and durable rubber sole.",img:"https://picsum.photos/seed/shoes/400/400",link:"https://www.amazon.in/s?k=womens+running+shoes"},
-  {id:5,title:"Non-Stick Cookware Set",category:"Home",price:4499,oldPrice:6499,rating:4.4,reviews:150,stock:6,desc:"10-piece non-stick cookware set. Dishwasher safe with heat-resistant handles.",img:"https://picsum.photos/seed/cookware/400/400",link:"https://www.amazon.in/s?k=non+stick+cookware+set"},
-  {id:6,title:"LED Desk Lamp",category:"Home",price:1299,oldPrice:0,rating:4.2,reviews:65,stock:25,desc:"Adjustable brightness LED lamp with a built-in USB charging port. Eye-caring and energy-efficient.",img:"https://picsum.photos/seed/lamp/400/400",link:"https://www.amazon.in/s?k=led+desk+lamp"},
-  {id:7,title:"The Silent Ocean — Novel",category:"Books",price:499,oldPrice:0,rating:4.7,reviews:430,stock:12,desc:"A gripping mystery novel set on a remote island. Bestseller with over 400 five-star reviews.",img:"https://picsum.photos/seed/book1/400/400",link:"https://www.amazon.in/s?k=mystery+novel"},
-  {id:8,title:"Atomic Habits Study Guide",category:"Books",price:349,oldPrice:499,rating:4.8,reviews:900,stock:0,desc:"Companion study guide for building better habits. Practical exercises and actionable takeaways.",img:"https://picsum.photos/seed/book2/400/400",link:"https://www.amazon.in/s?k=atomic+habits"},
-  {id:9,title:"Yoga Mat Premium",category:"Sports",price:899,oldPrice:0,rating:4.3,reviews:120,stock:18,desc:"Extra-thick non-slip yoga mat with carry strap. Eco-friendly TPE material, 6mm cushioning.",img:"https://picsum.photos/seed/yoga/400/400",link:"https://www.amazon.in/s?k=yoga+mat"},
-  {id:10,title:"Adjustable Dumbbell Set",category:"Sports",price:9999,oldPrice:12999,rating:4.6,reviews:275,stock:4,desc:"5–52.5 lb adjustable dumbbells with a space-saving design. Quick-change weight selection.",img:"https://picsum.photos/seed/dumbbell/400/400",link:"https://www.amazon.in/s?k=adjustable+dumbbell+set"},
-  {id:11,title:"Mechanical Gaming Keyboard",category:"Electronics",price:6499,oldPrice:8999,rating:4.7,reviews:620,stock:11,desc:"RGB backlit mechanical keyboard with hot-swappable switches and detachable wrist rest.",img:"https://picsum.photos/seed/keyboard/400/400",link:"https://www.amazon.in/s?k=mechanical+gaming+keyboard"},
-  {id:12,title:"Stainless Steel Water Bottle",category:"Sports",price:699,oldPrice:0,rating:4.4,reviews:210,stock:30,desc:"Insulated 32oz water bottle keeps drinks cold for 24h or hot for 12h. BPA-free.",img:"https://picsum.photos/seed/bottle/400/400",link:"https://www.amazon.in/s?k=stainless+steel+water+bottle"}
-];
-
-/* ============================================================
    STATE
+   No seed/sample catalog — the store starts empty.
+   The ONLY products that ever appear are the ones an admin
+   adds through the Admin Dashboard ➜ Add Product.
    ============================================================ */
-let products   = load(STORAGE.products, SEED_PRODUCTS);
+let products   = load(STORAGE.products, []);
 let cart       = load(STORAGE.cart, []);
 let wishlist   = load(STORAGE.wishlist, []);
 let activeCategory = 'all';
@@ -1879,16 +1835,8 @@ function toggleCart(){
    ============================================================ */
 function checkout(){
   if(cart.length === 0){ toast('Your cart is empty', 'warn'); return; }
-  const subtotal = cartSubtotal();
-  const discount = appliedCoupon ? subtotal * COUPONS[appliedCoupon] : 0;
-  $('checkoutTotal').textContent = money(subtotal - discount);
-  $('checkoutModal').classList.add('active');
-}
-function closeCheckout(){ $('checkoutModal').classList.remove('active'); }
-function handleCheckout(e){
-  e.preventDefault();
   cart = []; appliedCoupon = null;
-  saveCart(); updateCartUI(); closeCheckout();
+  saveCart(); updateCartUI();
   $('cartSidebar').classList.remove('open');
   $('overlay').classList.remove('open');
   toast('🎉 Order placed successfully!', 'success');
@@ -2379,7 +2327,7 @@ function handleProductSubmit(e){
 }
 
 /* ============================================================
-   ADMIN — EXPORT / SAMPLES
+   ADMIN — EXPORT
    ============================================================ */
 function exportProducts(){
   const blob = new Blob([JSON.stringify(products, null, 2)], {type:'application/json'});
@@ -2389,24 +2337,6 @@ function exportProducts(){
   a.click();
   URL.revokeObjectURL(a.href);
   toast('📦 Exported', 'success');
-}
-function resetToSamples(){
-  showConfirm(
-    'Load Sample Data',
-    'This will replace all current products with the sample catalog. Continue?',
-    () => {
-      products = JSON.parse(JSON.stringify(SEED_PRODUCTS));
-      saveProducts();
-      cart = []; wishlist = []; deleteSelection.clear();
-      saveCart(); saveWishlist();
-      $('wishCount').textContent = '0';
-      renderAdminAll();
-      renderProducts();
-      updateCartUI();
-      toast('↺ Sample data loaded', 'success');
-    },
-    'Replace'
-  );
 }
 
 /* ============================================================
