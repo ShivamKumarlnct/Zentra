@@ -1423,6 +1423,28 @@ function load(key, fallback){
 }
 function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
 function saveProducts(){ save(STORAGE.products, products); }
+
+/* Keep other tabs of the SAME browser in sync.
+   localStorage is shared between tabs/windows on the same origin. */
+window.addEventListener('storage', function(e){
+  if(e.key !== STORAGE.products) return;
+  try{
+    products = e.newValue ? JSON.parse(e.newValue) : [];
+    renderProducts();
+    if(typeof renderAdminAll === 'function' && isAdmin) renderAdminAll();
+    if(typeof updateCartUI === 'function') updateCartUI();
+  }catch(err){}
+});
+
+/* Refresh from localStorage whenever this page becomes visible again. */
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'visible'){
+    products = load(STORAGE.products, []);
+    renderProducts();
+    if(typeof renderAdminAll === 'function' && isAdmin) renderAdminAll();
+  }
+});
+
 function saveCart(){ save(STORAGE.cart, cart); }
 function saveWishlist(){ save(STORAGE.wishlist, wishlist); }
 
