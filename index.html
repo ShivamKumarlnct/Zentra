@@ -271,6 +271,12 @@
   @keyframes adProgress{from{width:100%}to{width:0}}
 
   @media(max-width:720px){
+    .platform-form-grid{grid-template-columns:1fr}
+    .platform-links{gap:6px}
+    .platform-link{flex:1;text-align:center;min-width:100px}
+  }
+
+  @media(max-width:720px){
     .ad-banner-wrap{padding:12px}
     .ad-banner{padding:14px 16px;gap:12px;border-radius:var(--radius)}
     .ad-img{width:64px;height:64px;border-radius:10px}
@@ -599,6 +605,13 @@
     font-size:20px;display:grid;place-items:center;transition:var(--transition)}
   .modal-close:hover{background:var(--danger-bg);color:var(--danger);transform:rotate(90deg)}
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .platform-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .platform-form-grid label{font-size:11.5px;margin-bottom:5px;color:var(--text-muted)}
+  .platform-form-grid input{width:100%}
+  .platform-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .platform-link{padding:8px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg-soft);font-size:11.5px;font-weight:800;transition:var(--transition)}
+  .platform-link:hover{background:var(--primary);color:#fff;border-color:var(--primary);transform:translateY(-1px)}
+
   .form-grid .full{grid-column:1/-1}
   .modal-content label{display:block;margin-bottom:7px;font-weight:800;
     font-size:12.5px;color:var(--text);letter-spacing:.2px}
@@ -1267,9 +1280,31 @@
           </div>
         </div>
         <div class="full">
-          <label style="color:var(--accent)">🔗 Product Link (Affiliate URL) <span class="req">*</span></label>
-          <input type="url" id="pLink" required placeholder="https://amazon.in/dp/XXXXXXX?tag=youraffid">
-          <span class="hint">The outbound link customers land on when clicking "Buy Now".</span>
+          <label style="color:var(--accent)">🛍️ Platform Links</label>
+          <div class="platform-form-grid">
+            <div>
+              <label>Amazon</label>
+              <input type="url" id="pAmazon" placeholder="https://amazon.in/...">
+            </div>
+            <div>
+              <label>Flipkart</label>
+              <input type="url" id="pFlipkart" placeholder="https://flipkart.com/...">
+            </div>
+            <div>
+              <label>Your Store</label>
+              <input type="url" id="pStore" placeholder="https://yourstore.com/...">
+            </div>
+            <div>
+              <label>Other Platform</label>
+              <input type="url" id="pOther" placeholder="https://...">
+            </div>
+          </div>
+          <span class="hint">Add the same product once. Customers can choose where they want to buy it.</span>
+        </div>
+        <div class="full">
+          <label style="color:var(--accent)">🔗 Main Product Link <span class="req">*</span></label>
+          <input type="url" id="pLink" required placeholder="Paste your main affiliate/product URL">
+          <span class="hint">Used as the default Buy Now link when no platform-specific link is selected.</span>
         </div>
       </div>
       <div class="modal-buttons">
@@ -1591,6 +1626,19 @@ function getFiltered(){
 /* ============================================================
    RENDER PRODUCTS
    ============================================================ */
+function renderPlatformLinks(p){
+  const links = [
+    ['Amazon','amazon','🛒'],
+    ['Flipkart','flipkart','🛍️'],
+    ['My Store','store','🏪'],
+    ['Other','other','🔗']
+  ].filter(([,key]) => p.platforms && p.platforms[key]);
+  if(!links.length) return '';
+  return `<div class="platform-links">${links.map(([label,key,icon]) =>
+    `<a class="platform-link" href="${esc(p.platforms[key])}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${icon} ${label}</a>`
+  ).join('')}</div>`;
+}
+
 function renderProducts(){
   updateClearBtn();
   const grid = $('productsGrid');
@@ -1655,6 +1703,7 @@ function renderProducts(){
               ${outOfStock ? 'Unavailable' : '🛒 Add'}
             </button>
           </div>
+          ${renderPlatformLinks(p)}
         </div>
       </div>`;
   }).join('');
@@ -1699,6 +1748,7 @@ function openDetail(id){
         </div>
       </div>
     </div>
+    ${renderPlatformLinks(p)}
     <div class="modal-buttons">
       <button class="btn btn-secondary" onclick="closeDetail()">Close</button>
       <button class="btn btn-secondary" onclick="toggleWishlist(${p.id});openDetail(${p.id})">
@@ -2263,6 +2313,10 @@ function openProductForm(id){
     $('pDesc').value        = p.desc || '';
     $('pImage').value       = p.img || '';
     $('pLink').value        = p.link || '';
+    $('pAmazon').value      = p.platforms?.amazon || '';
+    $('pFlipkart').value    = p.platforms?.flipkart || '';
+    $('pStore').value       = p.platforms?.store || '';
+    $('pOther').value       = p.platforms?.other || '';
     previewImage();
   } else {
     $('productModalTitle').textContent = '➕ Add New Product';
@@ -2290,7 +2344,13 @@ function handleProductSubmit(e){
     reviews:  parseInt($('pReviews').value) || 0,
     desc:     $('pDesc').value.trim(),
     img:      $('pImage').value.trim(),
-    link:     $('pLink').value.trim()
+    link:     $('pLink').value.trim(),
+    platforms: {
+      amazon: $('pAmazon').value.trim(),
+      flipkart: $('pFlipkart').value.trim(),
+      store: $('pStore').value.trim(),
+      other: $('pOther').value.trim()
+    }
   };
   if(!data.title){ toast('Product title is required', 'danger'); return; }
   if(!data.desc){ toast('Description is required', 'danger'); return; }
@@ -2298,6 +2358,9 @@ function handleProductSubmit(e){
   if(!data.link){ toast('Product link is required', 'danger'); return; }
   try { new URL(data.img); }  catch { toast('Please enter a valid image URL', 'danger'); return; }
   try { new URL(data.link); } catch { toast('Please enter a valid product link', 'danger'); return; }
+  for(const [name, url] of Object.entries(data.platforms)){
+    if(url){ try { new URL(url); } catch { toast(`Please enter a valid ${name} URL`, 'danger'); return; } }
+  }
 
   let newProduct = null;
   if(editId){
