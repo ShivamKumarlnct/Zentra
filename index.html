@@ -1379,7 +1379,7 @@
     We may earn a commission when you buy through links on this site — at no extra cost to you.
   </div>
   <div>© <span id="year"></span> ZENTRA — Premium Shopping Experience · Prices in ₹ (INR)</div>
-  <div class="copy">All product data is stored locally in your browser.</div>
+  <div class="copy">Catalog synced live across all devices. Cart &amp; wishlist stay local to your browser.</div>
 </footer>
 
 <script>
@@ -1389,6 +1389,19 @@
 const ADMIN_PASSWORD = '270903';
 const FREE_SHIPPING = 4000;
 const AD_DURATION = 8000;
+
+/* ============================================================
+   ☁️ CLOUD SYNC (Firebase Realtime Database)
+   This is what makes products show for EVERY customer, on
+   every browser/device/tab — not just your own browser.
+   If your Database URL is different from the one below,
+   replace it here (Firebase console → Realtime Database →
+   the URL shown at the top of the page).
+   ============================================================ */
+const FIREBASE_DB_URL = 'https://zentra-8b781-default-rtdb.firebaseio.com';
+const PRODUCTS_CLOUD_URL = FIREBASE_DB_URL.replace(/\/$/, '') + '/products.json';
+const CLOUD_POLL_MS = 8000; // how often customers auto-refresh the catalog
+let cloudSyncFailed = false;
 const STORAGE = {
   products: 'zentra_products',
   cart:     'zentra_cart',
@@ -1422,27 +1435,71 @@ function load(key, fallback){
   catch(e){ return fallback; }
 }
 function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
-function saveProducts(){ save(STORAGE.products, products); }
 
-/* Keep other tabs of the SAME browser in sync.
-   localStorage is shared between tabs/windows on the same origin. */
-window.addEventListener('storage', function(e){
-  if(e.key !== STORAGE.products) return;
+/* ------------------------------------------------------------
+   Products now live in Firebase, not just this browser.
+   saveProducts() still keeps a fast local cache (so the page
+   isn't blank while the network call is in flight) but the
+   source of truth every customer reads from is the cloud.
+   ------------------------------------------------------------ */
+function saveProducts(){
+  save(STORAGE.products, products); // local cache, instant UI
+  pushProductsToCloud(products);    // real save, seen by everyone
+}
+
+async function pushProductsToCloud(list){
   try{
-    products = e.newValue ? JSON.parse(e.newValue) : [];
-    renderProducts();
-    if(typeof renderAdminAll === 'function' && isAdmin) renderAdminAll();
-    if(typeof updateCartUI === 'function') updateCartUI();
-  }catch(err){}
-});
-
-/* Refresh from localStorage whenever this page becomes visible again. */
-document.addEventListener('visibilitychange', function(){
-  if(document.visibilityState === 'visible'){
-    products = load(STORAGE.products, []);
-    renderProducts();
-    if(typeof renderAdminAll === 'function' && isAdmin) renderAdminAll();
+    const res = await fetch(PRODUCTS_CLOUD_URL, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(list)
+    });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    cloudSyncFailed = false;
+  }catch(err){
+    if(!cloudSyncFailed){
+      cloudSyncFailed = true;
+      toast('⚠️ Could not sync to cloud — check FIREBASE_DB_URL / database rules', 'danger');
+    }
+    console.error('pushProductsToCloud failed:', err);
   }
+}
+
+async function fetchProductsFromCloud(){
+  try{
+    const res = await fetch(PRODUCTS_CLOUD_URL, {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    // Firebase returns null for an empty node, or an object keyed by
+    // push-id if data was ever written as an object instead of an array.
+    if(Array.isArray(data)) return data.filter(Boolean);
+    if(data && typeof data === 'object') return Object.values(data).filter(Boolean);
+    return [];
+  }catch(err){
+    cloudSyncFailed = true;
+    console.error('fetchProductsFromCloud failed:', err);
+    return null; // null = "couldn't reach cloud", keep whatever we have
+  }
+}
+
+async function refreshProductsFromCloud(silent){
+  const cloudList = await fetchProductsFromCloud();
+  if(cloudList === null) return; // offline / rules not set yet — keep local cache
+  products = cloudList;
+  save(STORAGE.products, products);
+  renderProducts();
+  if(typeof renderAdminAll === 'function' && isAdmin) renderAdminAll();
+  if(typeof updateCartUI === 'function') updateCartUI();
+  if(!silent) toast('Catalog refreshed', 'success');
+}
+
+/* Poll for changes so a customer who leaves the tab open still
+   sees new products admin adds elsewhere, without reloading. */
+setInterval(() => refreshProductsFromCloud(true), CLOUD_POLL_MS);
+
+/* Refresh immediately whenever this tab becomes visible again. */
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'visible') refreshProductsFromCloud(true);
 });
 
 function saveCart(){ save(STORAGE.cart, cart); }
@@ -2456,8 +2513,9 @@ $('adminOverlay').addEventListener('click', e => {
 (function init(){
   $('year').textContent = new Date().getFullYear();
   $('wishCount').textContent = wishlist.length;
-  renderProducts();
+  renderProducts();   // instant paint from local cache (may be empty on a new device)
   updateCartUI();
+  refreshProductsFromCloud(true); // then pull the real, shared catalog
 })();
 </script>
 </body>
